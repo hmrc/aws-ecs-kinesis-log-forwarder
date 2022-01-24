@@ -1,6 +1,6 @@
 def filter(event)
     matching_count_rules = []
-  
+
     # Standalone WAF rule
     non_terminating_matching_rules = event.get('[nonTerminatingMatchingRules]')
     if non_terminating_matching_rules
@@ -8,7 +8,7 @@ def filter(event)
         matching_count_rules.push(rule['ruleId'])
       }
     end
-  
+
     rule_group_list = event.get('[ruleGroupList]')
     if rule_group_list
       rule_group_list.each { |rule|
@@ -18,9 +18,9 @@ def filter(event)
         if match
           rule_group_id = match[1]
         end
-            
+
         # Rules in a Rule Group
-  
+
         if non_terminating_matching_rules
           non_terminating_matching_rules.each { |rule|
             if rule['action'] == 'COUNT'
@@ -28,9 +28,9 @@ def filter(event)
             end
           }
         end
-  
+
         # Excluded Managed WAF Rules
-  
+
         excludedRules = rule['excludedRules']
         if excludedRules
           excludedRules.each { |excludedRule|
@@ -41,15 +41,15 @@ def filter(event)
         end
       }
     end
-  
+
     if matching_count_rules.length() > 0
       event.set('matchingCountRules', matching_count_rules)
     end
     return [event]
-  
+
   end
-  
-  test "when there are standalone rules matched in COUNT mode" do 
+
+  test "when there are standalone rules matched in COUNT mode" do
     in_event { {
       "timestamp" => 1639580407632,
       "nonTerminatingMatchingRules"=> [
@@ -68,22 +68,22 @@ def filter(event)
           "requestId"=> "uuCC76pG7KLiBMUki4xtaksJ8kus4WCRyzuL7TwHx1pnp2EzG53uSQ=="
       }
     } }
-  
+
     expect("That the record is returned") do |events|
       events.size == 1
-    end 
-  
+    end
+
     expect("That the requestID is returned unchanged") do |events|
       events[0].get("httpRequest")["requestId"] == "uuCC76pG7KLiBMUki4xtaksJ8kus4WCRyzuL7TwHx1pnp2EzG53uSQ=="
-    end 
-  
+    end
+
     expect("That the matchingCountRules field is populated with matched standalone rulenames") do |events|
       events[0].get("matchingCountRules") == ["FromGBRule", "JonnyRules"]
     end
-  
+
   end
-  
-  test "when there are rules in a rulegroup matched in COUNT mode" do 
+
+  test "when there are rules in a rulegroup matched in COUNT mode" do
     in_event { {
       "timestamp": 1639657295700,
       "ruleGroupList": [
@@ -119,22 +119,22 @@ def filter(event)
           "requestId": "Yb2HR1G9sBm_aZhIqzejA1pFuoFNjU-DUrw-UYRlWmaY9PYTXHFDjQ=="
       }
   } }
-  
+
     expect("That the record is returned") do |events|
       events.size == 1
-    end 
-  
+    end
+
     expect("That the requestID is returned unchanged") do |events|
       events[0].get("httpRequest")["requestId"] == "Yb2HR1G9sBm_aZhIqzejA1pFuoFNjU-DUrw-UYRlWmaY9PYTXHFDjQ=="
-    end 
-  
+    end
+
     expect("That the matchingCountRules field is populated with <RuleGroupName>.<Rulename>") do |events|
       events[0].get("matchingCountRules") == ["INFRA-7170-RULE-GROUP.FromGB", "INFRA-7170-RULE-GROUP.JonnyRule", "DansRuleGroup.DansRule"]
     end
-  
+
   end
-  
-  test "when there are excluded rules in an AWS managed rulegroup excluded as COUNT" do 
+
+  test "when there are excluded rules in an AWS managed rulegroup excluded as COUNT" do
     in_event { {
       "timestamp": 1639657295700,
       "ruleGroupList": [
@@ -174,22 +174,22 @@ def filter(event)
         "requestId": "Yb2HR1G9sBm_aZhIqzejA1pFuoFNjU-DUrw-UYRlWmaY9PYTXHFDjQ=="
       }
     } }
-  
+
     expect("That the record is returned") do |events|
       events.size == 1
-    end 
-  
+    end
+
     expect("That the requestID is returned unchanged") do |events|
       events[0].get("httpRequest")["requestId"] == "Yb2HR1G9sBm_aZhIqzejA1pFuoFNjU-DUrw-UYRlWmaY9PYTXHFDjQ=="
     end
-  
+
     expect("That the matchingCountRules field is populated with <RuleGroupName>.<RuleName>") do |events|
-      events[0].get("matchingCountRules") == ["AWS#AWSManagedRulesCommonRuleSet.NoUserAgent_HEADER", "AWS#AWSManagedRulesCommonRuleSet.SizeRestrictions_BODY", "AWS#AWSManagedRulesAdminProtectionRuleSet.EC2MetaDataSSRF_BODY"] 
+      events[0].get("matchingCountRules") == ["AWS#AWSManagedRulesCommonRuleSet.NoUserAgent_HEADER", "AWS#AWSManagedRulesCommonRuleSet.SizeRestrictions_BODY", "AWS#AWSManagedRulesAdminProtectionRuleSet.EC2MetaDataSSRF_BODY"]
     end
-  
+
   end
-  
-  test "when all three methods of count matching are triggered in a single request" do 
+
+  test "when all three methods of count matching are triggered in a single request" do
     in_event { {
       "timestamp": 1639657295700,
       "ruleGroupList": [
@@ -228,17 +228,17 @@ def filter(event)
           "requestId": "Yb2HR1G9sBm_aZhIijrgbrgbrehigbruiegbreibgXHFDjQ=="
       }
   } }
-  
+
     expect("That the record is returned") do |events|
       events.size == 1
-    end 
-  
+    end
+
     expect("That the requestID is returned unchanged") do |events|
       events[0].get("httpRequest")["requestId"] == "Yb2HR1G9sBm_aZhIijrgbrgbrehigbruiegbreibgXHFDjQ=="
     end
-  
+
     expect("That the matchingCountRules field is populated") do |events|
-      events[0].get("matchingCountRules") == ["FromGBRule", "INFRA-7170-RULE-GROUP.FromGB", "AWS#AWSManagedRulesAdminProtectionRuleSet.HostingProviderIPList"] 
+      events[0].get("matchingCountRules") == ["FromGBRule", "INFRA-7170-RULE-GROUP.FromGB", "AWS#AWSManagedRulesAdminProtectionRuleSet.HostingProviderIPList"]
     end
-  
+
   end
