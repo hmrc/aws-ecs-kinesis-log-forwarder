@@ -64,7 +64,7 @@ connects to a VPCE endpoint behind which is the Telemetry Fluent Bit Proxy.
 ### LOGSTASH_OUTPUT_MODE
 This should either be `redis` or `fluentbit-proxy`. If an environment has been migrated to the New Telemetry AWS
 environment, `fluentbit-proxy` should be used. If the environment is yet to be migrated and Telemetry components are
-still in WebOps, then use `redis`. 
+still in WebOps, then use `redis`.
 
 *NOTE:* This value defaults to `redis`
 
