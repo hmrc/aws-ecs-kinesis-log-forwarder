@@ -31,6 +31,10 @@ node(label: 'docker') {
             }
         }
 
+        stage('test image') {
+            sh("docker run --rm -e ENVIRONMENT=test aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} logstash --config.test_and_exit")
+        }
+
         stage('push to registry') {
             if (env.BRANCH_NAME == "main") {
                 sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')

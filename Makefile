@@ -1,7 +1,7 @@
 # This Makefile is for local development builds
 # Jenkins produces builds for each push to git using the Jenkinsfile
 
-all: kinesis_log_forwarder
+all: kinesis_log_forwarder test
 
 LOCAL_TAG:=local
 GIT_TAG:=$(shell git describe --dirty=+WIP-${USER}-$(shell date "+%Y-%m-%dT%H:%M:%S%z") --always)
@@ -14,3 +14,6 @@ IMAGE_LABELS:= --label org.opencontainers.image.created="$(shell date '+%Y-%m-%d
 
 kinesis_log_forwarder:
 	docker build -t 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) $(IMAGE_LABELS) .
+
+test:
+	docker run --rm -e ENVIRONMENT=test 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) logstash --config.test_and_exit
