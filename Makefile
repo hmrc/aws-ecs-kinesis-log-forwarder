@@ -16,4 +16,4 @@ kinesis_log_forwarder:
 	docker build -t 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) $(IMAGE_LABELS) .
 
 test:
-	docker run --rm -e ENVIRONMENT=test 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) logstash --config.test_and_exit
+	docker run --rm -e ENVIRONMENT=test -e COMPONENT_NAME=test-component -e ENGINEER_ENV=test_env -e 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) logstash --config.test_and_exit
