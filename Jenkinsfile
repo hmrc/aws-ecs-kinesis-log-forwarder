@@ -40,6 +40,7 @@ node(label: 'docker') {
                 sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')
 
                 sh("docker tag aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}")
+                sh("docker tag 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:latest")
                 sh("docker push 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}")
                 sh("docker inspect --format='{{index .RepoDigests 0}}' 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} > aws-ecs-kinesis-log-forwarder-digest.txt")
                 archiveArtifacts 'aws-ecs-kinesis-log-forwarder-digest.txt'
