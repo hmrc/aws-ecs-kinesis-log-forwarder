@@ -30,17 +30,11 @@ settings are then injected using environment variables passed into the `docker r
 # xpack.monitoring.enabled & pipeline.ecs_compatibility are configured via environment variables.
 # Note we are also setting three custom variables used to control the Logstash output.
 docker run --env ENVIRONMENT="integration" \
-           --env LOGSTASH_OUTPUT_MODE="msk_tls" \
            --env PIPELINE_ECS_COMPATIBILITY=disabled \
            --env XPACK_MONITORING_ENABLED=false \
-	   --env MSK_BOOTSTRAP_BROKERS="test1:9094" \
+	   --env MSK_BOOTSTRAP_BROKERS="${MSK_BOOTSTRAP_BROKERS}" \
            aws-ecs-kinesis-log-forwarder:latest
-
-# The variables are also stored in a Docker environment file.
-docker run --env-file ./docker.env aws-ecs-kinesis-log-forwarder:latest
-
 ```
-
 This repo uses the default Logstash configuration folder `/usr/share/logsash/pipeline` into which we copy the files
 from the local `pipeline` folder.
 
@@ -53,7 +47,6 @@ files, this is the only modification to the default Logstash Docker image.
 
 We make use of three environment variables:
 * ENVIRONMENT (derived from AWS_TAG_ENV)
-* LOGSTASH_OUTPUT_MODE (derived from AWS_TAG_LOGSTASH_OUTPUT_MODE)
 * MSK_BOOTSTRAP_BROKERS (derived from AWS_TAG_MSK_BOOTSTRAP_BROKERS)
 
 ### ENVIRONMENT
@@ -75,7 +68,12 @@ kafka-broker-1.mdtp-staging.telemetry.tax.service.gov.uk:9094,kafka-broker-2.mdt
 ```
 
 ### LOGSTASH_OUTPUT_MODE
-This should be `msk_tls`. While the redis backstop path is still in place the option `redis` is also valid but strongly discoraged unless there is a known issue.
+Previous versions of this container accepted an option to write to one of:
+- redis
+- debug (stdout)
+If you need debug output locally it is suggested that you run the container as follows:
+
+
 
 ## License
 
