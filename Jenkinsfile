@@ -32,7 +32,7 @@ node(label: 'docker') {
         }
 
         stage('test image') {
-            sh("docker run --rm --env ENVIRONMENT=test --env COMPONENT_NAME=test-component --env ENGINEER_ENV='' --env MSK_BOOTSTRAP_BROKERS='kafka-broker-1,kafka-broker-2,kafka-broker-3' aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} logstash --config.test_and_exit")
+            sh("make test")
         }
 
         stage('push to registry') {
