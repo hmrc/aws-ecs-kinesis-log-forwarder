@@ -32,7 +32,7 @@ node(label: 'docker') {
         }
 
         stage('test image') {
-            sh("make test")
+            sh("make test LOCAL_TAG=\"${GIT_TAG}-${BUILD_TIME}\"")
         }
 
         stage('push to registry') {
