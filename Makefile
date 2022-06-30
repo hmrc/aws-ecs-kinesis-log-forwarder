@@ -16,4 +16,9 @@ kinesis_log_forwarder:
 	docker build -t 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) $(IMAGE_LABELS) .
 
 test:
-	docker run --rm -e ENVIRONMENT=test -e COMPONENT_NAME=test-component -e ENGINEER_ENV='' -e 419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) logstash --config.test_and_exit
+	docker run --rm --env ENVIRONMENT=test \
+                    --env COMPONENT_NAME=test-component \
+                    --env ENGINEER_ENV='' \
+                    --env MSK_BOOTSTRAP_BROKERS='kafka-broker-1,kafka-broker-2,kafka-broker-3' \
+                    419929493928.dkr.ecr.eu-west-2.amazonaws.com/kinesis_log_forwarder:$(LOCAL_TAG) \
+                    logstash --config.test_and_exit
