@@ -29,7 +29,7 @@ node(label: 'docker') {
 
         stage('build image') {
             ansiColor('xterm') {
-                sh("make kinesis_log_forwarder IMAGE_NAME=\"${IMAGE_NAME}\" LOCAL_TAG=\"${GIT_TAG}-${BUILD_TIME}\" IMAGE_LABELS=${IMAGE_LABELS}")
+                sh("make kinesis_log_forwarder IMAGE_NAME=\"${IMAGE_NAME}\" LOCAL_TAG=\"${GIT_TAG}-${BUILD_TIME}\" IMAGE_LABELS=\"${IMAGE_LABELS}\"")
             }
         }
 
