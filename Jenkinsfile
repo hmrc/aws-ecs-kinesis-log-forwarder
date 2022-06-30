@@ -16,6 +16,7 @@ node(label: 'docker') {
         def GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
         def GIT_URL = sh(returnStdout: true, script: 'git remote get-url origin').trim()
         def GIT_TAG = sh(returnStdout: true, script: 'git describe --dirty=+WIP --always').trim()
+        def IMAGE_NAME="419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder"
 
         IMAGE_LABELS = "--label org.opencontainers.image.created='$BUILD_DATE' " +
             "--label org.opencontainers.image.source='$GIT_URL' " +
@@ -27,18 +28,17 @@ node(label: 'docker') {
 
         stage('build image') {
             ansiColor('xterm') {
-                image = docker.build "419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}", IMAGE_LABELS + " ."
+                image = docker.build "${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME}", IMAGE_LABELS + " ."
             }
         }
 
         stage('test image') {
-            sh("make test LOCAL_TAG=\"${GIT_TAG}-${BUILD_TIME}\"")
+            sh("make test IMAGE_NAME=\"${IMAGE_NAME}\" LOCAL_TAG=\"${GIT_TAG}-${BUILD_TIME}\"")
         }
 
         stage('push to registry') {
             if (env.BRANCH_NAME == "main") {
                 sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')
-
                 sh("docker push 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}")
                 sh("docker inspect --format='{{index .RepoDigests 0}}' 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} > aws-ecs-kinesis-log-forwarder-digest.txt")
                 archiveArtifacts 'aws-ecs-kinesis-log-forwarder-digest.txt'
