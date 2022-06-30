@@ -15,10 +15,10 @@
 
 ## Introduction
 
-This project is responsible for building a Logstash Docker image based upon the
-[Official Logstash Docker](https://hub.docker.com/_/logstash) image. For further information on how to configure the
+This project is responsible for building a Logstash Docker image based upon the official
+[Logstash Docker](https://hub.docker.com/_/logstash) image. For further information on how to configure the
 Docker image, please refer to the [source](https://www.elastic.co/guide/en/logstash/current/docker-config.html)
-documentation. Note that this image is based off Centos.
+documentation.
 
 ## Configuring the Logstash Process
 
@@ -28,13 +28,16 @@ settings are then injected using environment variables passed into the `docker r
 
 ```shell
 # xpack.monitoring.enabled & pipeline.ecs_compatibility are configured via environment variables.
-# Note we are also setting three custom variables used to control the Logstash output.
+# Note we are also setting three custom variables used to control the Logstash output
 docker run --env ENVIRONMENT="integration" \
+           --env FLUENTBIT_PROXY_HOST="mdtp_telemetry" \
+           --env LOGSTASH_OUTPUT_MODE="kafka-tls" \
            --env PIPELINE_ECS_COMPATIBILITY=disabled \
            --env XPACK_MONITORING_ENABLED=false \
-	   --env MSK_BOOTSTRAP_BROKERS="${MSK_BOOTSTRAP_BROKERS}" \
-           aws-ecs-kinesis-log-forwarder:latest
+           --env MSK_BOOTSTRAP_BROKERS="${MSK_BOOTSTRAP_BROKERS}" \
+           419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:latest
 ```
+
 This repo uses the default Logstash configuration folder `/usr/share/logsash/pipeline` into which we copy the files
 from the local `pipeline` folder.
 
@@ -45,35 +48,35 @@ files, this is the only modification to the default Logstash Docker image.
 
 ## Custom Environment Variables
 
-We make use of three environment variables:
+We make use of four environment variables:
 * ENVIRONMENT (derived from AWS_TAG_ENV)
+* FLUENTBIT_PROXY_HOST (derived from AWS_TAG_FLUENTBIT_PROXY_HOST)
+* LOGSTASH_OUTPUT_MODE (derived from AWS_TAG_LOGSTASH_OUTPUT_MODE)
 * MSK_BOOTSTRAP_BROKERS (derived from AWS_TAG_MSK_BOOTSTRAP_BROKERS)
 
 ### ENVIRONMENT
 This variable dictates which Kinesis log stream from which to pull logs e.g. `isc-cloudfront-waf-integration`
 
+### FLUENTBIT_PROXY_HOST
+This variable is used in the output config to determine the destination of the logs. This will be a Route53 record which
+connects to a VPCE endpoint behind which is the Telemetry Fluent Bit Proxy.
+
+*NOTE:* This value defaults to `mdtp_telemetry`
+
+### LOGSTASH_OUTPUT_MODE
+This should either be `redis` or `fluentbit-proxy`. If an environment has been migrated to the New Telemetry AWS
+environment, `fluentbit-proxy` should be used. If the environment is yet to be migrated and Telemetry components are
+still in WebOps, then use `redis`.
+
+*NOTE:* This value defaults to `redis`
+
 ### MSK_BOOTSTRAP_BROKERS
-This variable is used to determine the location of the Kafka broker(s) where data will be sent to. The port is included where:
-
-| Port | Description |
-|------|-------------|
-| 9092 | Default Kafka Broker plaintext |
-| 9094 | Default Kafka Broker TLS encrypted |
-| 9096 | MSK SASL/SCRAM authentication with TLS encryption |
-
-This is expected to be a comma seperated list. eg:
+This variable is used to determine the location of the Kafka broker(s) to where data will be sent.
+This is expected to be a comma separated list. eg:
 
 ```
 kafka-broker-1.mdtp-staging.telemetry.tax.service.gov.uk:9094,kafka-broker-2.mdtp-staging.telemetry.tax.service.gov.uk:9094,kafka-broker-3.mdtp-staging.telemetry.tax.service.gov.uk:9094
 ```
-
-### LOGSTASH_OUTPUT_MODE
-Previous versions of this container accepted an option to write to one of:
-- redis
-- debug (stdout)
-If you need debug output locally it is suggested that you run the container as follows:
-
-
 
 ## License
 
