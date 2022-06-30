@@ -27,7 +27,7 @@ node(label: 'docker') {
 
         stage('build image') {
             ansiColor('xterm') {
-                image = docker.build "aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}", IMAGE_LABELS + " ."
+                image = docker.build "419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}", IMAGE_LABELS + " ."
             }
         }
 
@@ -39,7 +39,6 @@ node(label: 'docker') {
             if (env.BRANCH_NAME == "main") {
                 sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')
 
-                sh("docker tag aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}")
                 sh("docker push 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME}")
                 sh("docker inspect --format='{{index .RepoDigests 0}}' 419929493928.dkr.ecr.eu-west-2.amazonaws.com/aws-ecs-kinesis-log-forwarder:${GIT_TAG}-${BUILD_TIME} > aws-ecs-kinesis-log-forwarder-digest.txt")
                 archiveArtifacts 'aws-ecs-kinesis-log-forwarder-digest.txt'
