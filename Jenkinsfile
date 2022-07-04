@@ -50,17 +50,6 @@ node(label: 'docker') {
             }
         }
 
-        stage('build ami') {
-            if (env.BRANCH_NAME == "main") {
-                build job: 'ami/docker/aws-ami-kinesis-log-forwarder/main',
-                    parameters: [
-                    string(name: 'docker_image_tag', value: "${GIT_TAG}-${BUILD_TIME}")
-                ]
-            } else {
-                echo "Skipping ami build as not on main branch"
-            }
-        }
-
     } catch (e) {
         if (env.BRANCH_NAME == "main") {
             snsPublish(topicArn: 'arn:aws:sns:eu-west-2:419929493928:jenkins_build_notifications',
