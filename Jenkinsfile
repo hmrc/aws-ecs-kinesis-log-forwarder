@@ -40,14 +40,15 @@ node(label: 'docker') {
         }
 
         stage('push to registry') {
-            if (env.BRANCH_NAME == "main") {
-                sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')
-                sh("docker push ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME}")
-                sh("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME} > ${IMAGE_DIGEST}")
-                archiveArtifacts IMAGE_DIGEST
-            } else {
-                echo "Skipping push as not on main branch"
-            }
+            sh('aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 419929493928.dkr.ecr.eu-west-2.amazonaws.com')
+
+            sh("docker push ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME}")
+            sh("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME} > ${IMAGE_DIGEST}")
+
+            sh("docker tag ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME} ${IMAGE_NAME}:${env.BRANCH_NAME}")
+            sh("docker push ${IMAGE_NAME}:${env.BRANCH_NAME}")
+
+            archiveArtifacts IMAGE_DIGEST
         }
 
     } catch (e) {
