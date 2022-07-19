@@ -2,6 +2,15 @@
 
 env.BUILD_TAG = "${env.JOB_NAME}-${env.BUILD_NUMBER}".replace('/', '_')
 
+def accounts = [
+  integration  : "150648916438",
+  staging      : "186795391298",
+  qa           : "248771275994",
+  externaltest : "970278273631",
+  production   : "490818658393",
+  development  : "618259438944"
+]
+
 node(label: 'docker') {
     try {
 
@@ -45,10 +54,19 @@ node(label: 'docker') {
             sh("docker push ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME}")
             sh("docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME} > ${IMAGE_DIGEST}")
 
-            sh("docker tag ${IMAGE_NAME}:${GIT_TAG}-${BUILD_TIME} ${IMAGE_NAME}:${env.BRANCH_NAME}")
-            sh("docker push ${IMAGE_NAME}:${env.BRANCH_NAME}")
-
             archiveArtifacts IMAGE_DIGEST
+        }
+
+        stage('publish latest tag') {
+            accounts.each { account -> sh("""
+                set +x
+                SESSIONID=\$(date +"%s")
+                AWS_CREDENTIALS=\$(aws sts assume-role --role-arn arn:aws:iam::${account.value}:role/RoleJenkinsInfraBuild --role-session-name \$SESSIONID --query '[Credentials.AccessKeyId,Credentials.SecretAccessKey,Credentials.SessionToken]' --output text)
+                export AWS_ACCESS_KEY_ID=\$(echo \$AWS_CREDENTIALS | awk '{print \$1}')
+                export AWS_SECRET_ACCESS_KEY=\$(echo \$AWS_CREDENTIALS | awk '{print \$2}')
+                export AWS_SESSION_TOKEN=\$(echo \$AWS_CREDENTIALS | awk '{print \$3}')
+                aws ssm put-parameter --name /ecr/latest-images/aws-ecs-kinesis-log-forwarder/${env.BRANCH_NAME} --value ${GIT_TAG}-${BUILD_TIME} --type String --overwrite
+            """)}
         }
 
     } catch (e) {
