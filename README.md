@@ -20,6 +20,9 @@ This project is responsible for building a Logstash Docker image based upon the 
 Docker image, please refer to the [source](https://www.elastic.co/guide/en/logstash/current/docker-config.html)
 documentation.
 
+It is rebuilt regularly [triggered by this job](https://jenkins.tools.management.tax.service.gov.uk/job/docker/job/multibranch-triggers/job/rebuild-cron/) 
+with the latest minor versions of the Python and Logstash dependencies.
+
 ## Configuring the Logstash Process
 
 It is possible to configure the Logstash process in a number of ways, however, for consistency it is advisable to use a
