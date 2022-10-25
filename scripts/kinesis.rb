@@ -8,6 +8,14 @@ def filter(event)
       matching_count_rules.push(rule['ruleId'])
     }
   end
+  event.set('[nonTerminatingMatchingRules]', non_terminating_matching_rules)
+
+  terminating_match_details = event.get('[terminatingRuleMatchDetails]')
+  if terminating_match_details
+    terminating_match_details.each { |detail|
+      matching_count_rules.push(rule['ruleId'])
+    }
+  end
 
   rule_group_list = event.get('[ruleGroupList]')
   if rule_group_list
@@ -23,6 +31,11 @@ def filter(event)
 
       if non_terminating_matching_rules
         non_terminating_matching_rules.each { |rule|
+        if rule.has_key?('nonTerminatingMatchingRules')
+            if rule['nonTerminatingMatchingRules'][0].has_key?('matchedData')
+              rule['nonTerminatingMatchingRules'][0].delete('matchedData')
+            end
+        end
           if rule['action'] == 'COUNT'
             matching_count_rules.push(rule_group_id + '.' + rule['ruleId'])
           end
@@ -35,10 +48,16 @@ def filter(event)
       if excludedRules
         excludedRules.each { |excludedRule|
           if excludedRule['exclusionType'] == 'EXCLUDED_AS_COUNT'
+            if excludedRule.has_key?('ruleMatchDetails')
+                if excludedRule['ruleMatchDetails'][0].has_key?('matchedData')
+                  excludedRule['ruleMatchDetails'][0].delete('matchedData')
+                end
+            end
             matching_count_rules.push(rule_group_id + '.' + excludedRule['ruleId'])
           end
         }
       end
+      event.set('ruleGroupList', rule_group_list)
     }
   end
 
@@ -108,7 +127,14 @@ test "when there are rules in a rulegroup matched in COUNT mode" do
           {
             "ruleId": "DansRule",
             "action": "COUNT",
-            "ruleMatchDetails": []
+            "ruleMatchDetails": [{
+                "conditionType": "XSS",
+                "matchedData": [
+                  "<?",
+                  "xml"
+                ],
+                "location": "BODY"
+              }]
           }
         ]
       }
@@ -118,7 +144,7 @@ test "when there are rules in a rulegroup matched in COUNT mode" do
     }
   } }
 
-  expect("That the record is returned") do |events|
+  expect("That the record is returned without the matchedData") do |events|
     events.size == 1
   end
 
