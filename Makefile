@@ -22,9 +22,6 @@ build_base:
 	docker build --build-arg LOGSTASH_VERSION=$$LOGSTASH_VERSION -t $(BASE_IMAGE_NAME):$(LOCAL_TAG) $(IMAGE_LABELS) . -f Dockerfile-base
 
 kinesis_log_forwarder:
-	# Chances are low but the API searches anywhere in the string and might not start with our major version
-	export LOGSTASH_VERSION=$$(curl -s "https://hub.docker.com/v2/repositories/library/logstash/tags?page_size=100&name=$(LOGSTASH_MAJOR_VERSION)" | \
-		jq -r '.results | map(select(.name | startswith("$(LOGSTASH_MAJOR_VERSION)"))) | sort_by(.tag_last_pushed) | last | .name'); \
 	docker build -t $(IMAGE_NAME):$(LOCAL_TAG) $(IMAGE_LABELS) . -f Dockerfile
 
 test:
@@ -35,7 +32,7 @@ test:
                     $(IMAGE_NAME):$(LOCAL_TAG) \
                     logstash --config.test_and_exit
 
-debug-test:
+debug-test: build_base
 	docker run --rm --env ENVIRONMENT=test \
                     --env COMPONENT_NAME=debug-test-component \
                     --env ENGINEER_ENV='' \
