@@ -35,6 +35,11 @@ node(label: 'docker') {
             "--label uk.gov.service.tax.vcs-tag='${GIT_TAG}' " +
             "--label uk.gov.service.tax.build='${env.BUILD_TAG}' "
 
+        stage('build base image') {
+            ansiColor('xterm') {
+                sh("make build_base")
+            }
+        }
 
         stage('build image') {
             ansiColor('xterm') {
