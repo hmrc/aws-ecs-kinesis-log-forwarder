@@ -9,12 +9,15 @@ def filter(event)
     }
   end
 
+  terminating_match_details_without_matched_data = []
   terminating_match_details = event.get('[terminatingRuleMatchDetails]')
   if terminating_match_details
-    terminating_match_details.each { |detail|
-      matching_count_rules.push(rule['ruleId'])
-    }
+    terminating_match_details.each do | detail |
+      detail.delete("matchedData")
+      terminating_match_details_without_matched_data.push(detail)
+    end
   end
+  event.set('[terminatingRuleMatchDetails]', terminating_match_details_without_matched_data)
 
   event.set('[nonTerminatingMatchingRules]', non_terminating_matching_rules)
 
@@ -75,13 +78,42 @@ def filter(event)
   if matching_count_rules.length() > 0
     event.set('matchingCountRules', matching_count_rules)
   end
-  return [event]
+  [event]
+end
+
+test "when there are terminatingRuleMatchDetails it should return them in matchingCountRules" do
+  in_event {
+    JSON.parse('{
+        "terminatingRuleMatchDetails": [
+              {
+                  "conditionType": "SQL_INJECTION",
+                  "sensitivityLevel": "HIGH",
+                  "location": "HEADER",
+                  "matchedData": [
+                      "10",
+                      "AND",
+                      "1"
+                  ]
+              }
+          ]
+      }')
+  }
+
+  expect("terminatingRuleMatchDetails does not contain the matchedData") do |events|
+    events[0].get("terminatingRuleMatchDetails") == [
+      {
+        "conditionType" => "SQL_INJECTION",
+        "location" => "HEADER",
+        "sensitivityLevel" => "HIGH"
+      }
+    ]
+  end
 end
 
 test "when there nonTerminatingMatchingRules with COUNT as the action and an empty ruleMatchDetails" do
   in_event { {
     "timestamp" => 1639580407632,
-    "nonTerminatingMatchingRules"=> [
+    "nonTerminatingMatchingRules" => [
       {
         "ruleId" => "FromGBRule",
         "action" => "COUNT",
@@ -93,8 +125,8 @@ test "when there nonTerminatingMatchingRules with COUNT as the action and an emp
         "ruleMatchDetails" => []
       }
     ],
-    "httpRequest"=> {
-      "requestId"=> "uuCC76pG7KLiBMUki4xtaksJ8kus4WCRyzuL7TwHx1pnp2EzG53uSQ=="
+    "httpRequest" => {
+      "requestId" => "uuCC76pG7KLiBMUki4xtaksJ8kus4WCRyzuL7TwHx1pnp2EzG53uSQ=="
     }
   } }
 
@@ -139,13 +171,13 @@ test "When a ruleGroupId contains more than one ruleId with an action of COUNT" 
             "ruleId": "DansRule",
             "action": "COUNT",
             "ruleMatchDetails": [{
-                "conditionType": "XSS",
-                "matchedData": [
-                  "<?",
-                  "xml"
-                ],
-                "location": "BODY"
-              }]
+                                   "conditionType": "XSS",
+                                   "matchedData": [
+                                     "<?",
+                                     "xml"
+                                   ],
+                                   "location": "BODY"
+                                 }]
           }
         ]
       }
@@ -161,7 +193,7 @@ test "When a ruleGroupId contains more than one ruleId with an action of COUNT" 
 
   expect("That matchedData is not present in ruleMatchDetails") do |events|
     ruleMatchDetails = events[0].get("ruleGroupList")[1]['nonTerminatingMatchingRules'][0]['ruleMatchDetails'][0]
-    ruleMatchDetails == {"conditionType"=>"XSS", "location"=>"BODY"}
+    ruleMatchDetails == { "conditionType" => "XSS", "location" => "BODY" }
   end
 
   expect("That the requestID is returned unchanged") do |events|
