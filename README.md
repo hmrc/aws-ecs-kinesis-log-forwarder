@@ -81,6 +81,17 @@ This is expected to be a comma separated list. eg:
 kafka-broker-1.mdtp-staging.telemetry.tax.service.gov.uk:9094,kafka-broker-2.mdtp-staging.telemetry.tax.service.gov.uk:9094,kafka-broker-3.mdtp-staging.telemetry.tax.service.gov.uk:9094
 ```
 
+### Debugging logstash locally
+You can run a local logstash-base container to test basic configuration changes.
+The local container does not use the Kafka input plugin we should add a Kafka stub in the future.
+
+```
+make debug-test
+```
+
+When the logstash base conatiner is running you can place sample logs into /usr/share/logstash/test-log.json for testing.
+The Logstash output will send the data to stdout() in the container.
+
 ## License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
