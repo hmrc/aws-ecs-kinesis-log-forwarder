@@ -35,7 +35,7 @@ def filter(event)
           if non_terminating_rule['action'] == 'COUNT'
             matching_count_rules.push(rule_group_id + '.' + non_terminating_rule['ruleId'])
           end
-          if non_terminating_rule.length() > 0
+          if non_terminating_rule.length > 0
             if non_terminating_rule.has_key?('ruleMatchDetails')
               if non_terminating_rule['ruleMatchDetails']
                 if non_terminating_rule['ruleMatchDetails'].length > 0
@@ -58,7 +58,7 @@ def filter(event)
           if excludedRule['exclusionType'] == 'EXCLUDED_AS_COUNT'
             matching_count_rules.push(rule_group_id + '.' + excludedRule['ruleId'])
             if excludedRule.has_key?('ruleMatchDetails')
-              if excludedRule['ruleMatchDetails'].length() > 0
+              if excludedRule['ruleMatchDetails'].to_s.length > 0
                 if excludedRule['ruleMatchDetails'][0].has_key?('matchedData')
                   excludedRule['ruleMatchDetails'][0].delete('matchedData')
                 end
