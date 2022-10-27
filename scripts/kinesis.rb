@@ -8,7 +8,6 @@ def filter(event)
       matching_count_rules.push(rule['ruleId'])
     }
   end
-  event.set('[nonTerminatingMatchingRules]', non_terminating_matching_rules)
 
   terminating_match_details = event.get('[terminatingRuleMatchDetails]')
   if terminating_match_details
@@ -16,6 +15,8 @@ def filter(event)
       matching_count_rules.push(rule['ruleId'])
     }
   end
+
+  event.set('[nonTerminatingMatchingRules]', non_terminating_matching_rules)
 
   rule_group_list = event.get('[ruleGroupList]')
   if rule_group_list
@@ -30,16 +31,23 @@ def filter(event)
       # Rules in a Rule Group
 
       if non_terminating_matching_rules
-        non_terminating_matching_rules.each { |rule|
-        if rule.has_key?('nonTerminatingMatchingRules')
-            if rule['nonTerminatingMatchingRules'][0].has_key?('matchedData')
-              rule['nonTerminatingMatchingRules'][0].delete('matchedData')
+        non_terminating_matching_rules.each { |non_terminating_rule|
+          if non_terminating_rule['action'] == 'COUNT'
+            matching_count_rules.push(rule_group_id + '.' + non_terminating_rule['ruleId'])
+          end
+          if non_terminating_rule.length() > 0
+            if non_terminating_rule.has_key?('ruleMatchDetails')
+              if non_terminating_rule['ruleMatchDetails']
+                if non_terminating_rule['ruleMatchDetails'].length > 0
+                  if non_terminating_rule['ruleMatchDetails'][0].has_key?('matchedData')
+                    non_terminating_rule['ruleMatchDetails'][0].delete('matchedData')
+                  end
+                end
+              end
             end
-        end
-          if rule['action'] == 'COUNT'
-            matching_count_rules.push(rule_group_id + '.' + rule['ruleId'])
           end
         }
+        rule['nonTerminatingMatchingRules'] = non_terminating_matching_rules
       end
 
       # Excluded Managed WAF Rules
@@ -48,14 +56,17 @@ def filter(event)
       if excludedRules
         excludedRules.each { |excludedRule|
           if excludedRule['exclusionType'] == 'EXCLUDED_AS_COUNT'
+            matching_count_rules.push(rule_group_id + '.' + excludedRule['ruleId'])
             if excludedRule.has_key?('ruleMatchDetails')
+              if excludedRule['ruleMatchDetails'].length() > 0
                 if excludedRule['ruleMatchDetails'][0].has_key?('matchedData')
                   excludedRule['ruleMatchDetails'][0].delete('matchedData')
                 end
+              end
             end
-            matching_count_rules.push(rule_group_id + '.' + excludedRule['ruleId'])
           end
         }
+        rule['excludedRules'] = excludedRules
       end
       event.set('ruleGroupList', rule_group_list)
     }
@@ -67,7 +78,7 @@ def filter(event)
   return [event]
 end
 
-test "when there are standalone rules matched in COUNT mode" do
+test "when there nonTerminatingMatchingRules with COUNT as the action and an empty ruleMatchDetails" do
   in_event { {
     "timestamp" => 1639580407632,
     "nonTerminatingMatchingRules"=> [
@@ -87,7 +98,7 @@ test "when there are standalone rules matched in COUNT mode" do
     }
   } }
 
-  expect("That the record is returned") do |events|
+  expect("That the event is returned") do |events|
     events.size == 1
   end
 
@@ -95,12 +106,12 @@ test "when there are standalone rules matched in COUNT mode" do
     events[0].get("httpRequest")["requestId"] == "uuCC76pG7KLiBMUki4xtaksJ8kus4WCRyzuL7TwHx1pnp2EzG53uSQ=="
   end
 
-  expect("That the matchingCountRules field is populated with matched standalone rulenames") do |events|
+  expect("That matchingCountRules is populated with ruleId from nonTerminatingMatchingRules") do |events|
     events[0].get("matchingCountRules") == ["FromGBRule", "JonnyRules"]
   end
 end
 
-test "when there are rules in a rulegroup matched in COUNT mode" do
+test "When a ruleGroupId contains more than one ruleId with an action of COUNT" do
   in_event { {
     "timestamp": 1639657295700,
     "ruleGroupList": [
@@ -144,15 +155,20 @@ test "when there are rules in a rulegroup matched in COUNT mode" do
     }
   } }
 
-  expect("That the record is returned without the matchedData") do |events|
+  expect("That the record is returned") do |events|
     events.size == 1
+  end
+
+  expect("That matchedData is not present in ruleMatchDetails") do |events|
+    ruleMatchDetails = events[0].get("ruleGroupList")[1]['nonTerminatingMatchingRules'][0]['ruleMatchDetails'][0]
+    ruleMatchDetails == {"conditionType"=>"XSS", "location"=>"BODY"}
   end
 
   expect("That the requestID is returned unchanged") do |events|
     events[0].get("httpRequest")["requestId"] == "Yb2HR1G9sBm_aZhIqzejA1pFuoFNjU-DUrw-UYRlWmaY9PYTXHFDjQ=="
   end
 
-  expect("That the matchingCountRules field is populated with <RuleGroupName>.<Rulename>") do |events|
+  expect("That matchingCountRules is populated with <RuleGroupName>.<ruleId>") do |events|
     events[0].get("matchingCountRules") == ["INFRA-7170-RULE-GROUP.FromGB", "INFRA-7170-RULE-GROUP.JonnyRule", "DansRuleGroup.DansRule"]
   end
 end
