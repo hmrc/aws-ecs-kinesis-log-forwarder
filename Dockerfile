@@ -1,6 +1,7 @@
 ARG LOGSTASH_VERSION
 FROM docker.elastic.co/logstash/logstash:${LOGSTASH_VERSION}
 ENV PIPELINE_ECS_COMPATIBILITY=disabled
+ENV LS_JAVA_OPTS="-Xms4g -Xmx4g"
 
 RUN rm -f /usr/share/logstash/pipeline/logstash.conf
 
