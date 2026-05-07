@@ -1,6 +1,6 @@
 ARG LOGSTASH_VERSION
 FROM docker.elastic.co/logstash/logstash:${LOGSTASH_VERSION}
-ENV PIPELINE_ECS_COMPATIBILITY "disabled"
+ENV PIPELINE_ECS_COMPATIBILITY=disabled
 
 RUN rm -f /usr/share/logstash/pipeline/logstash.conf
 
